@@ -5,7 +5,9 @@
   "description": "Frontend statis Aksara Learning Center — landing page + panel admin (Vite)",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "vite",
+    "dev:api": "npm --prefix server run dev:local",
     "build": "vite build",
     "preview": "vite preview"
   },

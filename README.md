@@ -33,13 +33,48 @@ Lalu buka:
 - Landing: <http://localhost:8080/docs/index.html>
 - Admin:   <http://localhost:8080/docs/sites/>
 
-Alternatif dengan Vite (ada hot reload):
+### Frontend + backend sekaligus (satu perintah)
+
+Kalau folder `server/` juga ada di komputer Anda, satu perintah menjalankan
+keduanya — frontend (Vite) **dan** REST API lokal:
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 (langsung ke folder docs/)
+npm run dev
+```
+
+Keluaran perintah itu sudah memberi tahu URL yang siap dipakai: panel admin
+beserta parameter `?api=` yang menunjuk ke backend lokal, jadi tidak perlu
+mengedit atau menambah `?api=` manual.
+
+```text
+Landing  : http://localhost:5173/
+Admin    : http://localhost:5173/sites/index.html?api=http://localhost:3000/api
+API      : http://localhost:3000/api  (health: http://localhost:3000/api/health)
+```
+
+Log kedua server diberi awalan `[web]` / `[api]` supaya tidak tertukar, dan
+**Ctrl+C** mematikan keduanya. Port bisa diganti:
+
+```bash
+API_PORT=4000 WEB_PORT=5199 npm run dev
+```
+
+Ingin salah satu saja?
+
+```bash
+npm run dev:web    # frontend saja → http://localhost:5173
+npm run dev:api    # backend lokal saja → http://localhost:3000/api
 npm run build      # versi ter-minify → dist/ (opsional)
 ```
+
+> ℹ️ Bila `server/` belum ada, perintah `npm run dev` tetap jalan dengan
+> frontend saja dan memberi tahu bahwa folder itu berasal dari repo terpisah.
+>
+> ⚠️ Kalau Vite gagal start dengan pesan `Cannot find native binding` atau
+> `library load disallowed by system policy`, berkas biner Vite masih bertanda
+> karantina macOS (biasanya karena folder diunduh/dikirim lewat chat).
+> Bersihkan dengan: `xattr -dr com.apple.quarantine node_modules`
 
 ## Menghubungkan ke backend
 
@@ -52,6 +87,11 @@ Untuk mengarahkan ke backend lain (mis. server lokal), tambahkan parameter
 ```
 http://localhost:8080/docs/sites/?api=http://localhost:3000/api
 ```
+
+`npm run dev` melakukan ini otomatis: URL panel admin yang dicetaknya sudah
+membawa `?api=` ke backend lokal, sedangkan origin Vite (`http://localhost:5173`)
+sudah terdaftar di `FRONTEND_URLS` pada `server/.env` sehingga CORS endpoint
+privat tidak diblokir browser.
 
 > ⚠️ Backend produksi memakai database Supabase yang **nyata**. Saat menguji di
 > lokal, hindari menu Maintenance (unseed) karena bisa menghapus konten asli.
