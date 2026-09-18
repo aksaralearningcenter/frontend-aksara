@@ -96,6 +96,40 @@ privat tidak diblokir browser.
 > ⚠️ Backend produksi memakai database Supabase yang **nyata**. Saat menguji di
 > lokal, hindari menu Maintenance (unseed) karena bisa menghapus konten asli.
 
+## Asesmen & ujian siswa
+
+Menu **🧪 Asesmen** di panel admin (grup Akademik) mengatur paket ujian:
+judul, instruksi, **durasi dalam menit**, nilai kelulusan (KKM), status
+Draft/Aktif/Nonaktif, pengacakan soal & opsi, dan **bank soal** (pilihan ganda,
+isian singkat, esai) yang bisa ditambah, diedit, dihapus, dan diurutkan.
+
+Soal bisa diisi satu per satu atau diimpor massal: **📥 Impor Soal** menerima
+unggahan `.csv`/`.xlsx`, tempel langsung dari spreadsheet, plus tombol unduh
+template dan ekspor soal yang sudah ada.
+
+Halaman siswa tidak butuh akun — cukup bagikan tautan dari tombol
+**🔗 Salin Tautan Ujian**:
+
+```
+https://<situs>/ujian.html?id=ASM-xxxxxxxx     # produksi
+http://localhost:5173/ujian.html?id=ASM-xxxx&api=http://localhost:3000/api
+```
+
+Siswa mengisi nama → mengerjakan dengan **hitung mundur** → skor otomatis
+(pilihan ganda & isian) langsung tampil. Esai menunggu penilaian pengajar di
+panel admin: **📊 Hasil → 👁️ Detail**. Waktu resmi dihitung server, kunci
+jawaban tidak pernah dikirim ke halaman siswa, dan jawaban siswa disimpan
+sementara di perangkat agar tidak hilang saat refresh.
+
+> 📌 Fitur ini butuh tabel `assessments`, `assessment_questions`,
+> `assessment_attempts`, dan `assessment_answers`. Jalankan seluruh isi
+> `server/schema.sql` di **Supabase → SQL Editor** (idempotent, aman diulang)
+> sebelum memakai menu Asesmen.
+
+Panel admin juga punya mode **Terang / Gelap** (tombol 🌙 di kanan atas) dan
+pilihan bahasa **ID / EN** — keduanya tersimpan di perangkat, termasuk menu
+yang bisa dilipat, kotak cari menu, dan sidebar geser di tablet/ponsel.
+
 ## Deploy ke GitHub Pages
 
 Repo yang dipakai: **`aksaralearningcenter/frontend-aksara`**

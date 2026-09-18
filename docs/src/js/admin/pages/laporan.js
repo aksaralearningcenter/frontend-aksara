@@ -135,7 +135,7 @@ import { app, modal, closeModal, studentOptions } from '../helpers.js';
           '<button class="btn btn-g btn-sm" data-action="seed-semua">🌱 Seed Semua (LMS + Konten Landing)</button></div>' +
         tabel('Konten Landing', d.konten) +
         tabel('Data Operasional LMS', d.lms) +
-        tabel('Asesmen (paket & soal)', d.asesmen) +
+        tabel('Asesmen (paket, soal & hasil ujian)', d.asesmen) +
         '<div class="card" style="margin-bottom:16px;"><h3 style="margin-bottom:10px;">🗑️ Unseed (Kosongkan Data)</h3>' +
           '<p style="font-size:.78rem; margin-bottom:12px;">Menghapus baris data pada sheet yang dipilih (header tetap). <b>Tidak bisa dibatalkan</b> — pertimbangkan export CSV dulu.</p>' +
           '<div style="display:flex; flex-direction:column; gap:12px; max-width:520px;">' +
@@ -145,7 +145,7 @@ import { app, modal, closeModal, studentOptions } from '../helpers.js';
             '<p style="font-size:.7rem; opacity:.75; margin-top:5px;">Murid, Kelas, Absensi, Progres, Tabungan, Transaksi.</p></div>' +
           '</div></div>' +
         '<div class="card" style="border:1px solid #F3CFC9;"><h3 style="margin-bottom:10px;">☠️ Reset Total</h3>' +
-          '<p style="font-size:.78rem; margin-bottom:10px;">Mengosongkan <b>semua</b> sheet di atas (termasuk asesmen beserta soalnya) + Pendaftaran + Riwayat Login + semua akun <b>kecuali akun Admin yang sedang dipakai</b> (agar Anda tetap bisa login). Akun Orang Tua, Guru, dan pendaftar ikut terhapus.</p>' +
+          '<p style="font-size:.78rem; margin-bottom:10px;">Mengosongkan <b>semua</b> sheet di atas (termasuk asesmen, bank soal, dan hasil ujian siswa) + Pendaftaran + Riwayat Login + semua akun <b>kecuali akun Admin yang sedang dipakai</b> (agar Anda tetap bisa login). Akun Orang Tua, Guru, dan pendaftar ikut terhapus.</p>' +
           '<div class="fg"><label>Ketik “' + esc((d.konfirmasi || {}).semua || 'HAPUS SEMUA') + '” untuk mengaktifkan tombol</label>' +
           '<input id="maint-konfirmasi" placeholder="' + esc((d.konfirmasi || {}).semua || 'HAPUS SEMUA') + '" autocomplete="off"></div>' +
           '<div style="margin-top:12px;"><button class="btn btn-d btn-sm" data-action="unseed-semua" id="btn-reset-total" disabled>☠️ Reset Total Data</button></div></div>' +

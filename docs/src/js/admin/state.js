@@ -59,7 +59,8 @@ const INVALIDATION_MAP = {
   reports: ['reports'],
   progress: ['progress', 'dashboard'],
   asesmen: ['asesmen'],
-  soal: ['soal', 'asesmen']
+  soal: ['soal', 'asesmen'],
+  hasil: ['hasil', 'asesmen']
 };
 
 export function invalidateCache(entity) {

@@ -4,6 +4,9 @@
 // dan jembatan global untuk atribut inline.
 import { state, CACHE_TTL, invalidateCache, simpanHalaman } from './state.js';
 import { $, esc, skeletonHtml, siapkanTabelResponsif } from './ui.js';
+import { terjemahkan, terjemahkanAkar } from './i18n.js';
+import { pasangTema, pasangBahasa, pasangLaci, pasangMenu, tutupLaci,
+  bentangkanGrupUntuk, setelSaatBahasaBerubah } from './tampilan.js';
 import { API_URL } from './config.js';
 import { api } from './api.js';
 import { boot, doLogin, doLogout, forgotPass, setAppContext } from './auth.js';
@@ -17,7 +20,8 @@ import { render as renderUsers, actions as actionsUsers, openChangePass, saveCha
 import { render as renderKonten, actions as actionsKonten,
   savePricing, saveNews, saveBook, saveGallery, savePartner, saveTestimoni,
   saveFaq, saveProgram, saveKurikulum, saveKartu } from './pages/konten.js';
-import { render as renderAsesmen, actions as actionsAsesmen, saveAsesmen, saveSoal, jenisSoalBerubah } from './pages/asesmen.js';
+import { render as renderAsesmen, actions as actionsAsesmen, saveAsesmen, saveSoal,
+  jenisSoalBerubah, imporSoalSekarang, unduhTemplateSoal, simpanNilaiEsai } from './pages/asesmen.js';
 import { render as renderLaporan, actions as actionsLaporan, genReport, getLhLimit } from './pages/laporan.js';
 import { pilihBerkas, pratinjauGambar, pratinjauDokumen, unggahBerkas } from './pages/upload.js';
 
@@ -59,8 +63,11 @@ function handleAction(action, id, name, extra) {
   // Catatan: state.currentPage TIDAK di-set paksa di sini. Nilainya sudah diisi
   // state.js dari halaman terakhir yang dibuka (localStorage), supaya me-refresh
   // melanjutkan halaman yang sama — bukan selalu kembali ke dashboard.
-  document.querySelectorAll('#nav button').forEach(b => {
-    b.addEventListener('click', () => loadPage(b.dataset.page));
+  document.querySelectorAll('#nav button[data-page]').forEach(b => {
+    b.addEventListener('click', () => {
+      loadPage(b.dataset.page);
+      tutupLaci();   // di ponsel menu berbentuk laci: pilih menu → laci menutup
+    });
   });
 
   function applyGate(peran) {
@@ -82,29 +89,29 @@ function handleAction(action, id, name, extra) {
 
   // Halaman yang tidak punya menu sendiri tetap menyorot menu induknya
   // (mis. halaman “soal” masih bagian dari menu Asesmen).
-  const NAV_INDUK = { soal: 'asesmen' };
+  const NAV_INDUK = { soal: 'asesmen', hasil: 'asesmen' };
 
   function setActiveNav(page) {
     simpanHalaman(page);   // diingat agar refresh kembali ke halaman ini
     const menu = NAV_INDUK[page] || page;
     let tombolAktif = null;
-    document.querySelectorAll('#nav button').forEach(b => {
+    document.querySelectorAll('#nav button[data-page]').forEach(b => {
       const aktif = b.dataset.page === menu;
       b.classList.toggle('active', aktif);
       if (aktif) {
         tombolAktif = b;
         const judul = document.getElementById('pg-title');
-        if (judul) judul.textContent = b.dataset.title || b.textContent.trim();
+        // Judul halaman ikut bahasa aktif (data-title berisi teks Indonesia).
+        if (judul) judul.textContent = terjemahkan(b.dataset.title || b.textContent.trim());
       }
     });
-    // Di ponsel menu berubah jadi strip mendatar yang panjang (±40 menu).
-    // Geser otomatis ke menu aktif supaya pengguna tidak perlu menyapu jauh
-    // untuk tahu sedang di halaman mana. block:'nearest' agar halaman tidak
-    // ikut melompat secara vertikal.
+    // Menu aktif harus terlihat: buka grupnya bila tertutup, lalu geser daftar
+    // menu bila isinya lebih panjang dari tinggi yang tersedia.
+    bentangkanGrupUntuk(menu);
     const nav = $('nav');
-    if (tombolAktif && nav && nav.scrollWidth > nav.clientWidth + 4) {
+    if (tombolAktif && nav && nav.scrollHeight > nav.clientHeight + 4) {
       try {
-        tombolAktif.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+        tombolAktif.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       } catch (e) {
         tombolAktif.scrollIntoView(false);
       }
@@ -173,7 +180,7 @@ function handleAction(action, id, name, extra) {
   async function loadPage(page) {
     // Halaman detail soal butuh asesmen yang dipilih. Kalau konteksnya hilang
     // (mis. localStorage dibersihkan), kembali ke daftar asesmen.
-    if (page === 'soal' && !state.currentAsesmen) page = 'asesmen';
+    if ((page === 'soal' || page === 'hasil') && !state.currentAsesmen) page = 'asesmen';
     setActiveNav(page);
     const el = $('page');
     const cached = state.cache[page];
@@ -208,6 +215,7 @@ function handleAction(action, id, name, extra) {
       else if (page === 'registrations') data = await api('getRegistrations');
       else if (page === 'asesmen') data = await api('getAssesmen');
       else if (page === 'soal') data = await api('getAsesmenDetail', state.currentAsesmen);
+      else if (page === 'hasil') data = await api('getHasilAssesmen', state.currentAsesmen);
       else if (page === 'progress') data = {};
       else if (page === 'reports') data = await api('getReportSettings');
       else if (page === 'stats') data = await api('getStatsData');
@@ -221,21 +229,37 @@ function handleAction(action, id, name, extra) {
     } catch (ex) {
       el.innerHTML = '<div class="card"><div class="empty">⚠️ ' + esc(ex.message) + '<br><br><button class="btn btn-o btn-sm" onclick="loadPage(\'' + page + '\')">🔄 Coba Lagi</button></div></div>';
     }
-  }
+  }  // ============ BAHASA & TABEL RESPONSIF ============
 
-// ============ TABEL RESPONSIF ============
-
-  // ============ TABEL RESPONSIF ============
-  // Setiap kali isi #page berubah (render halaman, ganti baris tabel, dsb.),
-  // lengkapi tabel dengan data-label dari header kolomnya. Dengan begitu mode
-  // kartu di ponsel berlaku untuk semua tabel tanpa menyentuh renderer-nya.
+  // ============ BAHASA & TABEL RESPONSIF ============
+  // Setiap kali isi halaman/modal berubah (render halaman, ganti baris tabel,
+  // dsb.) dua hal dirapikan:
+  //   1. terjemahan teks ke bahasa aktif,
+  //   2. data-label tabel dari header kolomnya (mode kartu di ponsel).
+  // URUTANNYA PENTING: label menyalin teks <thead>, jadi harus dihitung
+  // setelah teksnya diterjemahkan.
+  //
+  // Aman dari pengulangan tak berujung: penerjemahan mengubah *teks* simpul
+  // (characterData), sedangkan pengamat ini hanya menonton childList — jadi
+  // perubahan tadi tidak memicu dirinya sendiri.
   (function () {
     const halaman = $('page');
-    if (!halaman || typeof MutationObserver === 'undefined') return;
-    const perbarui = function () { siapkanTabelResponsif(halaman); };
-    new MutationObserver(perbarui).observe(halaman, { childList: true, subtree: true });
-    perbarui();
+    const modal = $('modal');
+    if (typeof MutationObserver === 'undefined') return;
+    const segarkan = function (akar) {
+      terjemahkanAkar(akar);
+      siapkanTabelResponsif(akar);
+    };
+    [halaman, modal].forEach(function (akar) {
+      if (!akar) return;
+      new MutationObserver(function () { segarkan(akar); }).observe(akar, { childList: true, subtree: true });
+      segarkan(akar);
+    });
   })();
+
+  // Saat bahasa diganti, label tabel lama (sudah terhapus oleh tampilan.js)
+  // dihitung ulang dalam bahasa yang baru.
+  setelSaatBahasaBerubah(function () { siapkanTabelResponsif($('page')); });
 
 // ============ BOOT ============
 
@@ -249,6 +273,13 @@ function handleAction(action, id, name, extra) {
     RENDER, PREFETCH_MAP,
     pasangIdentitas, halamanAwal, tampilkanGagalMuat
   });
+
+  // Tema, bahasa, laci menu, dan lipatan menu dipasang lebih dulu supaya
+  // layar login pun sudah memakai tampilan & bahasa pilihan pengguna.
+  pasangTema();
+  pasangBahasa();
+  pasangLaci();
+  pasangMenu();
 
   if (state.token && API_URL) {
     boot();
@@ -266,7 +297,8 @@ function handleAction(action, id, name, extra) {
   // Daftar ini lengkap — menambah handler inline baru berarti menambah namanya
   // di sini juga.
   Object.assign(window, {
-    closeModal, doLogin, doLogout, filterTable, forgotPass, genReport, jenisSoalBerubah,
+    closeModal, doLogin, doLogout, filterTable, forgotPass, genReport,
+    imporSoalSekarang, jenisSoalBerubah, simpanNilaiEsai, unduhTemplateSoal,
     loadPage, loadProgressStudent, openAddProgress, openAddProgressFor, openChangePass,
     saveAsesmen, saveSoal,
     pilihBerkas, pratinjauDokumen, pratinjauGambar, saveAddClass, saveAddStudent,

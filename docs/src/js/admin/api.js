@@ -98,9 +98,15 @@ const API_MAP = {
   updateAssesmen:         { m: 'PUT',  p: a => 'assessments/' + encodeURIComponent(a[0]), b: a => a[1] },
   deleteAssesmen:         { m: 'DELETE', p: a => 'assessments/' + encodeURIComponent(a[0]) },
   addSoal:                { m: 'POST', p: a => 'assessments/' + encodeURIComponent(a[0]) + '/questions', b: a => a[1] },
+  // Impor massal: argumen kedua = array soal yang sudah lolos pratinjau.
+  bulkSoal:               { m: 'POST', p: a => 'assessments/' + encodeURIComponent(a[0]) + '/questions/bulk', b: a => ({ soal: a[1] }) },
   updateSoal:             { m: 'PUT',  p: a => 'assessments/' + encodeURIComponent(a[0]) + '/questions/' + encodeURIComponent(a[1]), b: a => a[2] },
   deleteSoal:             { m: 'DELETE', p: a => 'assessments/' + encodeURIComponent(a[0]) + '/questions/' + encodeURIComponent(a[1]) },
   reorderSoal:            { m: 'POST', p: a => 'assessments/' + encodeURIComponent(a[0]) + '/reorder', b: a => ({ ids: a[1] }) },
+  // Hasil pengerjaan siswa (mode ujian daring).
+  getHasilAssesmen:       { m: 'GET',  p: a => 'assessments/' + encodeURIComponent(a[0]) + '/attempts' },
+  getDetailHasil:         { m: 'GET',  p: a => 'assessments/attempts/' + encodeURIComponent(a[0]) },
+  nilaiEsai:              { m: 'POST', p: a => 'assessments/attempts/' + encodeURIComponent(a[0]) + '/nilai', b: a => a[1] },
   // --- USERS & LOG ---
   getUsers:               { m: 'GET',  p: 'users' },
   addUser:                { m: 'POST', p: 'users', b: a => a[0] },

@@ -2,6 +2,23 @@
       --navy: #102B4E; --navy2: #1A4073; --gold: #B8934A; --gold2: #D4AF37;
       --cream: #F8F6F0; --text: #4A5568; --border: #EAE5D9;
       --ok: #1E6B3C; --err: #B3261E; --warn: #9A7334;
+      /* ---------- Token tampilan (dipakai tema terang & gelap) ---------- */
+      --bg: #F8F6F0;                    /* latar halaman */
+      --surface: #FFFFFF;               /* kartu, modal, tabel */
+      --surface-2: #FDFCF9;             /* kolom isian, kartu urutan */
+      --surface-3: #F4F1E9;             /* blok skeleton, ikon kotak */
+      --topbar-bg: rgba(255,255,255,.93);
+      --ink: #102B4E;                   /* judul & label tebal */
+      --muted: #6B7484;                 /* keterangan sekunder */
+      --shadow-card: 0 1px 2px rgba(16,43,78,.04), 0 14px 34px -26px rgba(16,43,78,.4);
+      --shadow-pop: 0 16px 44px rgba(16,43,78,.28);
+      --skel-1: #EFEBE1; --skel-2: #F9F7F2;
+      --overlay: rgba(6,14,26,.55);
+      /* Aksen tema gelap (dipakai blok [data-theme="dark"]) */
+      --d-bg: #0B1524; --d-surface: #132133; --d-surface-2: #0F1D2F;
+      --d-border: rgba(255,255,255,.10); --d-ink: #EAF0F8; --d-text: #B9C6D8;
+      --radius: 14px;
+      --transisi: .2s ease;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
@@ -52,6 +69,17 @@
     .sidebar .brand small { display: block; font-size: 0.55rem; letter-spacing: 3px; color: var(--gold2); text-transform: uppercase; }
 
     .side-label { padding: 16px 20px 8px; font-size: .58rem; letter-spacing: 2.4px; text-transform: uppercase; color: rgba(255,255,255,.4); font-weight: 700; }
+    /* Kotak pencarian menu — berguna saat menu sudah banyak (±33 item). */
+    .nav-search { position: relative; padding: 12px 14px 6px; }
+    .nav-search input {
+      width: 100%; padding: 10px 12px 10px 34px; border-radius: 10px; font-size: .82rem;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: #fff;
+    }
+    .nav-search input::placeholder { color: rgba(255,255,255,.45); }
+    .nav-search input:focus { border-color: var(--gold2); background: rgba(255,255,255,.12); box-shadow: none; }
+    .nav-search::before { content: '🔍'; position: absolute; left: 24px; top: 50%; transform: translateY(-40%); font-size: .78rem; opacity: .7; }
+    .nav-kosong { display: none; padding: 16px 14px; font-size: .8rem; color: rgba(255,255,255,.55); }
+    .nav.cari-kosong .nav-kosong { display: block; }
     .nav { flex: 1; overflow-y: auto; padding: 0 12px 14px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .nav button {
       position: relative; border: none; background: none; text-align: left; color: rgba(255,255,255,.76);
@@ -61,10 +89,25 @@
     .nav button:hover { background: rgba(255,255,255,.09); color: #fff; }
     .nav button.active { background: rgba(184,147,74,.2); color: #fff; }
     .nav button.active::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; border-radius: 3px; background: var(--gold2); }
-    /* Grup menu di dalam sidebar */
+    /* ---------- Grup menu yang bisa dilipat ("extend") ---------- */
     .nav-group { display: flex; flex-direction: column; gap: 3px; }
-    .nav .side-label { padding: 15px 8px 6px; }
+    /* Judul grup = tombol lipat; menyimpan statusnya supaya menu yang jarang
+       dipakai (Konten Landing, Sistem) tidak memaksa menggeser daftar panjang. */
+    .nav .side-label {
+      width: 100%; padding: 13px 10px 7px; background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; border-radius: 8px;
+      font-size: .58rem; letter-spacing: 2.4px; text-transform: uppercase;
+      color: rgba(255,255,255,.45); font-weight: 700; text-align: left;
+    }
+    .nav .side-label:hover { color: rgba(255,255,255,.8); background: rgba(255,255,255,.05); }
+    .nav .side-label .chev { margin-left: auto; font-size: .7rem; transition: transform .22s ease; }
+    .nav-group.tutup .side-label .chev { transform: rotate(-90deg); }
     .nav .side-label:first-child { padding-top: 8px; }
+    .nav-items { display: flex; flex-direction: column; gap: 3px; overflow: hidden; max-height: 900px; transition: max-height .26s ease, opacity .2s ease; }
+    .nav-group.tutup .nav-items { max-height: 0; opacity: 0; }
+    /* Saat mencari, semua grup dibuka paksa supaya hasil pencarian terlihat. */
+    .nav.mencari .nav-items { max-height: 900px !important; opacity: 1 !important; }
+    .nav button.tersembunyi, .nav-group.tersembunyi { display: none; }
 
     .sidebar-foot { padding: 14px 18px 18px; border-top: 1px solid rgba(255,255,255,.09); display: flex; flex-direction: column; gap: 9px; }
     .sidebar-foot #who-label { font-size: .78rem; color: rgba(255,255,255,.85); word-break: break-word; line-height: 1.5; }
@@ -84,6 +127,27 @@
     .topbar .tb-right { display: flex; align-items: center; gap: 10px; }
     .topbar .tbtn-dark { background: var(--navy); border-color: var(--navy); color: #fff; text-decoration: none; }
     .topbar .tbtn-dark:hover { background: var(--navy2); }
+    /* Kotak judul ikut melar supaya tombol kanan tetap rapat di kanan. */
+    .tb-title { flex: 1; min-width: 0; }
+    /* ---------- Kontrol tampilan di topbar ---------- */
+    .icon-btn {
+      display: inline-flex; align-items: center; justify-content: center; flex: none;
+      width: 38px; height: 38px; border-radius: 10px; font-size: 1rem; line-height: 1;
+      background: var(--surface-2); border: 1px solid var(--border); color: var(--ink);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .icon-btn:hover { border-color: var(--gold); transform: translateY(-1px); }
+    .icon-btn:active { transform: none; }
+    /* Tombol ☰ hanya relevan saat sidebar jadi laci. */
+    .hanya-mobile { display: none; }
+    /* Pemilih bahasa bergaya segmented control: ID | EN */
+    .lang-switch { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
+    .lang-switch button {
+      border: none; background: none; border-radius: 999px; padding: 6px 11px;
+      font-size: .72rem; font-weight: 800; letter-spacing: .6px; color: var(--muted);
+    }
+    .lang-switch button.on { background: var(--navy); color: #fff; }
+    .lang-switch button:not(.on):hover { color: var(--ink); }
     .wrap { padding: 24px 26px 44px; max-width: 1320px; width: 100%; margin: 0 auto; }
 
     .card {
@@ -211,32 +275,42 @@
     .soal-acts { margin-left: auto; display: flex; gap: 6px; }
     .pt-chip { display: inline-flex; align-items: center; gap: 7px; }
     .pt-chip i { color: var(--gold); }
-    /* Tablet & ponsel: sidebar jadi strip di atas konten */
-    /* Tablet & ponsel: sidebar jadi strip menu di atas konten.
-       Strip-nya "menempel" saat halaman digulir, jadi pindah halaman tetap
-       satu ketukan tanpa harus naik ke atas dulu. */
+    /* =====================================================================
+       TABLET & PONSEL: SIDEBAR JADI LACI (DRAWER)
+       Sebelumnya menu berubah jadi strip mendatar di atas konten; dengan ±33
+       menu, strip itu memaksa pengguna menyapu jauh ke samping dan memakan
+       tinggi layar. Kini sidebar bergeser masuk sebagai laci dari kiri,
+       dibuka lewat tombol ☰ di topbar (atau digeser dari tepi kiri), ditutup
+       dengan mengetuk latar gelap, memilih menu, atau tombol Esc.
+       ===================================================================== */
     @media (max-width: 980px) {
       .shell.on { grid-template-columns: minmax(0, 1fr); }
-      .sidebar { position: static; height: auto; min-width: 0; max-width: 100vw; }
-      .sidebar .brand { padding: 13px 16px; }
-      .side-label { display: none; }
-      .nav {
-        flex-direction: row; flex-wrap: nowrap; min-width: 0;
-        overflow-x: auto; overflow-y: hidden; padding: 8px 10px 12px; gap: 6px;
-        position: sticky; top: 0; z-index: 60; background: #0c2138;
-        scrollbar-width: none; -webkit-overflow-scrolling: touch;
-        box-shadow: 0 10px 22px -18px rgba(0,0,0,.9);
+      .sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0; z-index: 120;
+        width: 288px; max-width: 86vw; height: 100vh; min-width: 0;
+        transform: translateX(-100%); will-change: transform;
+        transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+        box-shadow: 18px 0 48px -22px rgba(0,0,0,.75);
       }
-      .nav::-webkit-scrollbar { display: none; }
-      .nav-group { flex-direction: row; gap: 6px; }
-      .nav button { padding: 10px 15px; border-radius: 999px; background: rgba(255,255,255,.09); font-size: .8rem; }
-      .nav button.active::before { display: none; }
-      .nav button.active { background: var(--gold); color: #fff; }
-      .sidebar-foot { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 12px 16px 16px; }
-      .sidebar-foot #who-label { width: 100%; }
-      .topbar { padding: 13px 16px; min-width: 0; }
+      .sidebar .brand { padding: 16px 18px 15px; }
+      html.nav-buka .sidebar { transform: none; }
+      /* Latar gelap di belakang laci — juga menangkap ketukan untuk menutup. */
+      .nav-overlay {
+        position: fixed; inset: 0; z-index: 110; background: var(--overlay);
+        opacity: 0; pointer-events: none; transition: opacity .22s ease;
+      }
+      html.nav-buka .nav-overlay { opacity: 1; pointer-events: auto; }
+      html.nav-buka { overflow: hidden; }   /* latar tidak ikut tergulir */
+      .nav { padding: 10px 12px 14px; }
+      .sidebar-foot { padding: 12px 16px max(16px, env(safe-area-inset-bottom)); }
+      .topbar { padding: 12px 16px; min-width: 0; }
       .wrap { padding: 18px 16px 34px; min-width: 0; }
       .main { width: 100%; }
+      /* Tombol ☰ hanya muncul saat sidebar tidak lagi bersebelahan. */
+      .hanya-mobile { display: inline-flex !important; }
+    }
+    @media (min-width: 981px) {
+      .nav-overlay { display: none; }
     }
 
     @media (max-width: 640px) {
@@ -371,4 +445,76 @@
     html.ada-sesi .shell { display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100vh; }
     @media (max-width: 980px) {
       html.ada-sesi .shell { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    /* =====================================================================
+       TEMA GELAP (mode tampilan: Terang & Gelap)
+       Dipilih lewat tombol 🌙/☀️ di topbar dan disimpan di localStorage.
+       Atribut data-theme dipasang skrip kecil di <head> SEBELUM halaman
+       digambar, jadi tidak ada kedipan putih saat refresh.
+
+       Pendekatannya: token yang sudah dipakai aturan lama ditimpa di sini
+       (--cream, --border, --text), sedangkan permukaan yang warna latarnya
+       ditulis langsung (kartu, modal, isian, tabel) ditimpa per selektor.
+       Sidebar sengaja TIDAK diubah — gradasi navy-nya sudah gelap dan jadi
+       penanda identitas panel.
+       ===================================================================== */
+    html[data-theme="dark"] { --cream: var(--d-bg); --border: var(--d-border); --text: var(--d-text); }   /* --cream/--border juga dipakai latar lembut & garis tabel */
+    html[data-theme="dark"] body { background: var(--d-bg); }
+    html[data-theme="dark"] h1, html[data-theme="dark"] h2, html[data-theme="dark"] h3, html[data-theme="dark"] h4 { color: var(--d-ink); }
+    html[data-theme="dark"] .card, html[data-theme="dark"] .stat { background: var(--d-surface); border-color: var(--d-border); box-shadow: none; }
+    html[data-theme="dark"] .stat .n { color: var(--d-ink); }
+    html[data-theme="dark"] .topbar { background: rgba(11,21,36,.94); border-bottom-color: var(--d-border); }
+    html[data-theme="dark"] .icon-btn { background: var(--d-surface); color: var(--d-ink); border-color: var(--d-border); }
+    html[data-theme="dark"] .lang-switch { background: var(--d-surface); border-color: var(--d-border); }
+    html[data-theme="dark"] .lang-switch button.on { background: var(--gold); color: #0B1524; }
+    html[data-theme="dark"] input, html[data-theme="dark"] select, html[data-theme="dark"] textarea {
+      background: var(--d-surface-2); color: var(--d-ink); border-color: var(--d-border);
+    }
+    html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder { color: #6E8098; }
+    html[data-theme="dark"] .btn-o { background: var(--d-surface); color: var(--d-ink); border-color: var(--d-border); }
+    html[data-theme="dark"] .btn-o:hover { border-color: var(--gold); color: var(--gold2); }
+    html[data-theme="dark"] .btn-d { background: rgba(179,38,30,.22); color: #FF9E95; }
+    html[data-theme="dark"] .fg label { color: #A9B8CC; }
+    html[data-theme="dark"] .modal { background: var(--d-surface); }
+    html[data-theme="dark"] .modal .mf { background: var(--d-surface); border-top-color: var(--d-border); }
+    html[data-theme="dark"] .modal .mh { border-bottom-color: var(--d-border); }
+    html[data-theme="dark"] .modal-bg { background: rgba(3,8,16,.7); }
+    html[data-theme="dark"] .table-wrap { border-color: var(--d-border); }
+    html[data-theme="dark"] th { background: #16263A; }
+    html[data-theme="dark"] td { border-bottom-color: var(--d-border); }
+    html[data-theme="dark"] tbody tr:nth-child(even) td { background: rgba(255,255,255,.025); }
+    html[data-theme="dark"] tr:hover td { background: rgba(212,175,55,.10); }
+    html[data-theme="dark"] .empty { color: var(--d-text); }
+    html[data-theme="dark"] .mono, html[data-theme="dark"] .dok-link .dok-nama { color: #8FA0B8; }
+    html[data-theme="dark"] .sort-item { background: var(--d-surface); border-color: var(--d-border); }
+    html[data-theme="dark"] .sort-item .sort-info b { color: var(--d-ink); }
+    html[data-theme="dark"] .up-doc { background: var(--d-surface); color: var(--d-ink); border-color: var(--d-border); }
+    html[data-theme="dark"] .soal-item { background: var(--d-surface); border-color: var(--d-border); box-shadow: none; }
+    html[data-theme="dark"] .soal-tanya { color: var(--d-ink); }
+    html[data-theme="dark"] .skel-block, html[data-theme="dark"] .skel-line { background: linear-gradient(90deg, #1B2C42 25%, #22374F 37%, #1B2C42 63%); background-size: 400% 100%; }
+    html[data-theme="dark"] .badge { border: 1px solid transparent; }
+    html[data-theme="dark"] .b-ok { background: rgba(30,107,60,.24); color: #7BD3A0; }
+    html[data-theme="dark"] .b-warn { background: rgba(154,115,52,.24); color: #F0C77A; }
+    html[data-theme="dark"] .b-err { background: rgba(179,38,30,.22); color: #FF9E95; }
+    html[data-theme="dark"] .b-info { background: rgba(26,64,115,.5); color: #A8C6F0; }
+    html[data-theme="dark"] .b-pdf { background: rgba(179,38,30,.22); color: #FF9E95; }
+    html[data-theme="dark"] .b-word { background: rgba(43,87,154,.3); color: #A8C6F0; }
+    html[data-theme="dark"] .b-xls { background: rgba(30,113,69,.28); color: #86D3A6; }
+    html[data-theme="dark"] .b-ppt { background: rgba(196,71,42,.24); color: #FFAE97; }
+    html[data-theme="dark"] .st-Baru { background: rgba(21,101,192,.28); color: #9EC8F5; }
+    html[data-theme="dark"] .st-Selesai { background: rgba(46,125,50,.26); color: #9BD8A0; }
+    html[data-theme="dark"] .st-Ditolak { background: rgba(198,40,40,.24); color: #FF9E95; }
+    html[data-theme="dark"] .toast.ok { background: #10281A; color: #7BD3A0; border-color: rgba(123,211,160,.32); }
+    html[data-theme="dark"] .toast.err { background: #2A1413; color: #FF9E95; border-color: rgba(255,158,149,.32); }
+    html[data-theme="dark"] .login-box { background: var(--d-surface); }
+    html[data-theme="dark"] .login-err { background: rgba(179,38,30,.18); }
+    html[data-theme="dark"] table.responsif tbody tr { background: var(--d-surface); border-color: var(--d-border); }
+    html[data-theme="dark"] table.responsif tbody td::before { color: #A9B8CC; }
+    html[data-theme="dark"] .skel-line.short { width: 45%; }
+    html[data-theme="dark"] ::selection { background: rgba(212,175,55,.35); }
+
+    /* Peralihan halus saat tema diganti (hanya elemen besar, agar tidak berat). */
+    body, .card, .topbar, .icon-btn, .lang-switch, input, select, textarea, .modal, .sort-item, .stat {
+      transition: background-color .22s ease, color .22s ease, border-color .22s ease;
     }
