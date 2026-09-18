@@ -3,7 +3,7 @@
   // merangkai modul-modul di bawah, menyediakan navigasi/renderer halaman,
   // dan menangani event delegation untuk tombol.
   import { API_URL } from './config.js';
-  import { state, CACHE_TTL, invalidateCache } from './state.js';
+  import { state, CACHE_TTL, invalidateCache, simpanHalaman } from './state.js';
   import { $, esc, rp, skeletonHtml, toast, siapkanTabelResponsif } from './ui.js';
   import { api, post } from './api.js';
   import { boot, doLogin, doLogout, forgotPass, setAppContext } from './auth.js';
@@ -115,7 +115,9 @@
   }
 
   // ============ NAV & GATE ============
-  state.currentPage = 'dashboard';
+  // Catatan: state.currentPage TIDAK di-set paksa di sini. Nilainya sudah diisi
+  // state.js dari halaman terakhir yang dibuka (localStorage), supaya me-refresh
+  // melanjutkan halaman yang sama — bukan selalu kembali ke dashboard.
   document.querySelectorAll('#nav button').forEach(b => {
     b.addEventListener('click', () => loadPage(b.dataset.page));
   });
@@ -138,7 +140,7 @@
   }
 
   function setActiveNav(page) {
-    state.currentPage = page;
+    simpanHalaman(page);   // diingat agar refresh kembali ke halaman ini
     let tombolAktif = null;
     document.querySelectorAll('#nav button').forEach(b => {
       const aktif = b.dataset.page === page;
@@ -161,6 +163,39 @@
         tombolAktif.scrollIntoView(false);
       }
     }
+  }
+
+  // Menuliskan identitas pengguna di panel (dipakai boot() dan saat gagal muat).
+  function pasangIdentitas(me) {
+    if (!me) return;
+    $('who-label').textContent = '👤 ' + (me.nama || me.email) + ' · ' + me.peran;
+  }
+
+  // Halaman yang dibuka saat pertama tampil: lanjutkan halaman terakhir, asalkan
+  // halaman itu memang ada dan menunya tidak disembunyikan untuk peran ini.
+  function halamanAwal() {
+    const p = state.currentPage;
+    if (!p || !RENDER[p]) return 'dashboard';
+    const tombol = document.querySelector('#nav button[data-page="' + p + '"]');
+    if (tombol && tombol.offsetParent === null) return 'dashboard';   // tidak berhak / tidak ada
+    return p;
+  }
+
+  // Server tidak bisa dihubungi saat refresh. Sesi TIDAK dibuang — panel tetap
+  // tampil dengan identitas terakhir dan tombol untuk mencoba lagi.
+  function tampilkanGagalMuat(pesan, coba) {
+    $('login').style.display = 'none';
+    $('shell').classList.add('on');
+    applyGate(state.me ? state.me.peran : null);
+    if (state.me) pasangIdentitas(state.me);
+    $('page').innerHTML =
+      '<div class="card"><div class="empty">⚠️ ' + esc(pesan) +
+      '<br><br><button class="btn btn-n btn-sm" id="btn-coba-lagi">🔄 Coba Lagi</button></div></div>';
+    const tombol = $('btn-coba-lagi');
+    if (tombol) tombol.addEventListener('click', function () {
+      $('page').innerHTML = skeletonHtml();
+      coba();
+    });
   }
 
   // ============ PREFETCH (stale-while-revalidate antar halaman) ============
@@ -2296,7 +2331,8 @@
   // main.js ↔ auth.js.
   setAppContext({
     applyGate, setActiveNav, prefetch, loadPage,
-    RENDER, PREFETCH_MAP
+    RENDER, PREFETCH_MAP,
+    pasangIdentitas, halamanAwal, tampilkanGagalMuat
   });
 
   if (state.token && API_URL) {

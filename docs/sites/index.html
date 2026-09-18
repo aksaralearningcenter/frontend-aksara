@@ -9,6 +9,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../src/styles/admin.css">
+  <!-- Anti-kedip: bila ada sesi tersimpan, tandai <html> SEBELUM modul JS jalan
+       supaya layar login tidak sempat muncul saat halaman di-refresh. -->
+  <script>
+    try {
+      if (localStorage.getItem('aksara_token') && localStorage.getItem('aksara_user')) {
+        document.documentElement.classList.add('ada-sesi');
+      }
+    } catch (e) { /* localStorage diblokir → tampilkan login seperti biasa */ }
+  </script>
 </head>
 <body>
 

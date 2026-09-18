@@ -348,3 +348,16 @@
       table.responsif tbody td[data-label=""]::before { content: none; }
       table.responsif tbody tr td:last-child::before { content: none; }
     }
+
+    /* =====================================================================
+       ANTI-KEDIP SAAT REFRESH
+       Skrip kecil di <head> menambahkan kelas .ada-sesi pada <html> begitu
+       menemukan token tersimpan — sebelum modul JS dieksekusi. Dengan aturan
+       di bawah, panel langsung tampil dan layar login tidak sempat berkedip.
+       Kelas ini dihapus oleh hardLogout() saat server menolak sesi.
+       ===================================================================== */
+    html.ada-sesi .login { display: none !important; }
+    html.ada-sesi .shell { display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100vh; }
+    @media (max-width: 980px) {
+      html.ada-sesi .shell { grid-template-columns: minmax(0, 1fr); }
+    }

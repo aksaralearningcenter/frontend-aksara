@@ -1,6 +1,6 @@
 // ============ AUTH: LOGIN, LOGOUT & BOOTSTRAP SESI ============
 import { $, toast, skeletonHtml } from './ui.js';
-import { state, hardLogout } from './state.js';
+import { state, hardLogout, simpanSesi } from './state.js';
 import { post } from './api.js';
 
 // Bagian aplikasi yang hanya ada di main.js (nav, renderer halaman, prefetch).
@@ -49,19 +49,42 @@ export async function doLogout() {
 
 // Dipanggil setelah login berhasil dan saat halaman dimuat dengan token tersimpan.
 export async function boot() {
+  // 1. Tampilkan panel lebih dulu dari sesi yang tersimpan. Ini yang membuat
+  //    me-refresh halaman tidak lagi berkedip ke layar login.
+  if (state.me) {
+    document.documentElement.classList.add('ada-sesi');
+    $('login').style.display = 'none';
+    $('shell').classList.add('on');
+    app.pasangIdentitas(state.me);
+    app.applyGate(state.me.peran);
+    if (!$('page').innerHTML.trim()) $('page').innerHTML = skeletonHtml();
+  }
+
+  // 2. Validasi sesi ke server.
   let me;
   try {
     me = await post('me', { token: state.token });
-  } catch (e) { toast('Tidak bisa menghubungi server.', 'err'); hardLogout(); return; }
+  } catch (e) {
+    // Sesi ditolak server: api.js sudah memanggil hardLogout() (token dikosongkan),
+    // jadi memang harus kembali ke layar login.
+    if (!state.token) { hardLogout(); return; }
+    // Selain itu (jaringan terputus, server lambat, Vercel cold start) sesi masih
+    // sah — JANGAN dibuang. Cukup tawarkan coba lagi.
+    app.tampilkanGagalMuat(e.message, boot);
+    return;
+  }
   if (!me || !me.success) { hardLogout(); return; }
+
   state.me = me;
+  simpanSesi();                       // agar refresh berikutnya instan
   $('login').style.display = 'none';
   $('shell').classList.add('on');
-  $('who-label').textContent = '👤 ' + (me.nama || me.email) + ' · ' + me.peran;
+  app.pasangIdentitas(me);
   $('btn-cp').style.display = '';
   app.applyGate(me.peran);
 
-  const startPage = state.currentPage || 'dashboard';
+  // Lanjutkan di halaman yang terakhir dibuka (bukan selalu dashboard).
+  const startPage = app.halamanAwal();
   $('page').innerHTML = skeletonHtml();
 
   // ⚡ Satu round-trip untuk semua data inti (non-Orang Tua):
