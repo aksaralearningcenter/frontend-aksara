@@ -6,12 +6,14 @@ Tanpa framework: HTML + CSS + modul ES. Vite hanya dipakai sebagai dev server
 dan untuk build opsional (minify). **Karena itu, berkas di repo ini bisa
 langsung dilayani GitHub Pages tanpa langkah build.**
 
-- `index.html` — landing page (halaman publik)
-- `sites/index.html` — panel admin
-- `src/styles/` — `landing.css`, `admin.css`
-- `src/js/landing/` — modul landing (nav, konten, flipbook, galeri, chatbot, pendaftaran)
-- `src/js/admin/` — modul panel admin (`main.js` entry point, `auth.js`, `api.js`, `state.js`, `ui.js`, `config.js`)
-- `.nojekyll` — agar GitHub Pages menyajikan berkas apa adanya (tidak diproses Jekyll)
+Seluruh situs ada di dalam folder **`docs/`** — itulah yang dilayani GitHub Pages:
+
+- `docs/index.html` — landing page (halaman publik)
+- `docs/sites/index.html` — panel admin
+- `docs/src/styles/` — `landing.css`, `admin.css`
+- `docs/src/js/landing/` — modul landing (nav, konten, flipbook, galeri, chatbot, pendaftaran)
+- `docs/src/js/admin/` — modul panel admin (`main.js` entry point, `auth.js`, `api.js`, `state.js`, `ui.js`, `config.js`)
+- `docs/.nojekyll` — agar GitHub Pages menyajikan berkas apa adanya (tidak diproses Jekyll)
 
 Backend (REST API) ada di repo terpisah: **`Saepul-alam/backend-nodejs`**,
 dijalankan sebagai fungsi serverless di Vercel. Folder `server/` di komputer
@@ -28,15 +30,15 @@ python3 -m http.server 8080
 
 Lalu buka:
 
-- Landing: <http://localhost:8080/index.html>
-- Admin:   <http://localhost:8080/sites/index.html>
+- Landing: <http://localhost:8080/docs/index.html>
+- Admin:   <http://localhost:8080/docs/sites/index.html>
 
 Alternatif dengan Vite (ada hot reload):
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # hasil siap deploy → dist/
+npm run dev        # http://localhost:5173 (langsung ke folder docs/)
+npm run build      # versi ter-minify → dist/ (opsional)
 ```
 
 ## Menghubungkan ke backend
@@ -48,7 +50,7 @@ Untuk mengarahkan ke backend lain (mis. server lokal), tambahkan parameter
 `?api=` pada URL — tidak perlu mengedit berkas:
 
 ```
-http://localhost:8080/sites/index.html?api=http://localhost:3000/api
+http://localhost:8080/docs/sites/index.html?api=http://localhost:3000/api
 ```
 
 > ⚠️ Backend produksi memakai database Supabase yang **nyata**. Saat menguji di
@@ -56,8 +58,12 @@ http://localhost:8080/sites/index.html?api=http://localhost:3000/api
 
 ## Deploy ke GitHub Pages
 
-1. **Buat repo** di GitHub (mis. `aksara-frontend`), **jangan** centang
-   "Add a README".
+Repo yang dipakai: **`aksaralearningcenter/frontend-aksara`**
+(situs uji: <https://aksaralearningcenter.github.io/frontend-aksara/>).
+
+Bila ingin memakai repo lain:
+
+1. **Buat repo** di GitHub, **jangan** centang "Add a README".
 2. **Hubungkan & kirim** dari folder ini:
 
    ```bash
@@ -71,8 +77,12 @@ http://localhost:8080/sites/index.html?api=http://localhost:3000/api
 3. Buka repo → **Settings** → **Pages**.
 4. Bagian **Build and deployment**:
    - **Source**: `Deploy from a branch`
-   - **Branch**: `main` — folder `/ (root)`
+   - **Branch**: `main` — folder **`/docs`**
    - klik **Save**
+
+   > Situs sengaja diletakkan di folder `docs/` karena pada beberapa akun
+   > pilihan `/ (root)` tidak muncul di dropdown GitHub Pages — hanya `/docs`.
+   > Semua tautan di dalam HTML bersifat relatif, jadi lokasinya tidak masalah.
 5. Tunggu 1–2 menit. Situs tayang di:
 
    ```

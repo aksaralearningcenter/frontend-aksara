@@ -14,13 +14,17 @@ const berkas = (path) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
   base: './',
+  // Situs yang dipublikasikan ada di folder docs/ (dipilih sebagai sumber
+  // GitHub Pages). Struktur di dalamnya: docs/index.html = landing,
+  // docs/sites/index.html = panel admin, docs/src = CSS & JS.
+  root: 'docs',
   build: {
-    outDir: 'dist',
+    outDir: '../dist',
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        landing: berkas('index.html'),
-        admin: berkas('sites/index.html')
+        landing: berkas('docs/index.html'),
+        admin: berkas('docs/sites/index.html')
       }
     }
   },
