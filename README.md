@@ -31,7 +31,7 @@ python3 -m http.server 8080
 Lalu buka:
 
 - Landing: <http://localhost:8080/docs/index.html>
-- Admin:   <http://localhost:8080/docs/sites/index.html>
+- Admin:   <http://localhost:8080/docs/sites/>
 
 Alternatif dengan Vite (ada hot reload):
 
@@ -50,7 +50,7 @@ Untuk mengarahkan ke backend lain (mis. server lokal), tambahkan parameter
 `?api=` pada URL — tidak perlu mengedit berkas:
 
 ```
-http://localhost:8080/docs/sites/index.html?api=http://localhost:3000/api
+http://localhost:8080/docs/sites/?api=http://localhost:3000/api
 ```
 
 > ⚠️ Backend produksi memakai database Supabase yang **nyata**. Saat menguji di
