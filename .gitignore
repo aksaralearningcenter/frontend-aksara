@@ -13,6 +13,7 @@ _backup/
 legacy/
 .audit/
 .audit-src/
+.audit*.json
 
 # Rahasia — JANGAN pernah di-commit
 server/.env
