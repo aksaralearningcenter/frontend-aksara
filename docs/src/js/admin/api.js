@@ -91,6 +91,16 @@ const API_MAP = {
   getStatsData:           { m: 'GET',  p: 'stats' },
   getMyChildrenData:      { m: 'GET',  p: 'my-children' },
   setMyNotifEmail:        { m: 'POST', p: 'my-notif-email', b: a => ({ status: a[0] }) },
+  // --- ASESMEN (paket ujian + bank soal) ---
+  getAssesmen:            { m: 'GET',  p: 'assessments' },
+  getAsesmenDetail:       { m: 'GET',  p: a => 'assessments/' + encodeURIComponent(a[0]) },
+  addAssesmen:            { m: 'POST', p: 'assessments', b: a => a[0] },
+  updateAssesmen:         { m: 'PUT',  p: a => 'assessments/' + encodeURIComponent(a[0]), b: a => a[1] },
+  deleteAssesmen:         { m: 'DELETE', p: a => 'assessments/' + encodeURIComponent(a[0]) },
+  addSoal:                { m: 'POST', p: a => 'assessments/' + encodeURIComponent(a[0]) + '/questions', b: a => a[1] },
+  updateSoal:             { m: 'PUT',  p: a => 'assessments/' + encodeURIComponent(a[0]) + '/questions/' + encodeURIComponent(a[1]), b: a => a[2] },
+  deleteSoal:             { m: 'DELETE', p: a => 'assessments/' + encodeURIComponent(a[0]) + '/questions/' + encodeURIComponent(a[1]) },
+  reorderSoal:            { m: 'POST', p: a => 'assessments/' + encodeURIComponent(a[0]) + '/reorder', b: a => ({ ids: a[1] }) },
   // --- USERS & LOG ---
   getUsers:               { m: 'GET',  p: 'users' },
   addUser:                { m: 'POST', p: 'users', b: a => a[0] },

@@ -17,6 +17,7 @@ import { render as renderUsers, actions as actionsUsers, openChangePass, saveCha
 import { render as renderKonten, actions as actionsKonten,
   savePricing, saveNews, saveBook, saveGallery, savePartner, saveTestimoni,
   saveFaq, saveProgram, saveKurikulum, saveKartu } from './pages/konten.js';
+import { render as renderAsesmen, actions as actionsAsesmen, saveAsesmen, saveSoal, jenisSoalBerubah } from './pages/asesmen.js';
 import { render as renderLaporan, actions as actionsLaporan, genReport, getLhLimit } from './pages/laporan.js';
 import { pilihBerkas, pratinjauGambar, pratinjauDokumen, unggahBerkas } from './pages/upload.js';
 
@@ -39,11 +40,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 const ACTIONS = Object.assign({}, actionsDashboard, actionsMurid, actionsKelas,
-  actionsUsers, actionsKonten, actionsLaporan);
+  actionsUsers, actionsKonten, actionsAsesmen, actionsLaporan);
 
 // Renderer seluruh halaman, dirangkai dari modul per domain.
 const RENDER = Object.assign({}, renderDashboard, renderMurid, renderKelas,
-  renderUsers, renderKonten, renderLaporan);
+  renderUsers, renderKonten, renderAsesmen, renderLaporan);
 
 function handleAction(action, id, name, extra) {
   if (action === 'refresh-page') { invalidateCache(id); app.loadPage(id); return; }
@@ -79,11 +80,16 @@ function handleAction(action, id, name, extra) {
     });
   }
 
+  // Halaman yang tidak punya menu sendiri tetap menyorot menu induknya
+  // (mis. halaman “soal” masih bagian dari menu Asesmen).
+  const NAV_INDUK = { soal: 'asesmen' };
+
   function setActiveNav(page) {
     simpanHalaman(page);   // diingat agar refresh kembali ke halaman ini
+    const menu = NAV_INDUK[page] || page;
     let tombolAktif = null;
     document.querySelectorAll('#nav button').forEach(b => {
-      const aktif = b.dataset.page === page;
+      const aktif = b.dataset.page === menu;
       b.classList.toggle('active', aktif);
       if (aktif) {
         tombolAktif = b;
@@ -165,6 +171,9 @@ function handleAction(action, id, name, extra) {
   }
 
   async function loadPage(page) {
+    // Halaman detail soal butuh asesmen yang dipilih. Kalau konteksnya hilang
+    // (mis. localStorage dibersihkan), kembali ke daftar asesmen.
+    if (page === 'soal' && !state.currentAsesmen) page = 'asesmen';
     setActiveNav(page);
     const el = $('page');
     const cached = state.cache[page];
@@ -197,6 +206,8 @@ function handleAction(action, id, name, extra) {
       else if (page === 'chatbot') data = await api('getChatConfig');
       else if (page === 'maintenance') data = await api('getMaintenanceInfo');
       else if (page === 'registrations') data = await api('getRegistrations');
+      else if (page === 'asesmen') data = await api('getAssesmen');
+      else if (page === 'soal') data = await api('getAsesmenDetail', state.currentAsesmen);
       else if (page === 'progress') data = {};
       else if (page === 'reports') data = await api('getReportSettings');
       else if (page === 'stats') data = await api('getStatsData');
@@ -255,8 +266,9 @@ function handleAction(action, id, name, extra) {
   // Daftar ini lengkap — menambah handler inline baru berarti menambah namanya
   // di sini juga.
   Object.assign(window, {
-    closeModal, doLogin, doLogout, filterTable, forgotPass, genReport, loadPage,
-    loadProgressStudent, openAddProgress, openAddProgressFor, openChangePass,
+    closeModal, doLogin, doLogout, filterTable, forgotPass, genReport, jenisSoalBerubah,
+    loadPage, loadProgressStudent, openAddProgress, openAddProgressFor, openChangePass,
+    saveAsesmen, saveSoal,
     pilihBerkas, pratinjauDokumen, pratinjauGambar, saveAddClass, saveAddStudent,
     saveAddUser, saveAttendance, saveBook, saveChangePass, saveEditClass,
     saveEditStudent, saveFaq, saveGallery, saveKartu, saveKurikulum, saveNews,

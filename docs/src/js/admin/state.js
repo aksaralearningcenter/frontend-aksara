@@ -14,6 +14,9 @@ export const state = {
   me: bacaSesi(),
   // Halaman yang terakhir dibuka — dipulihkan saat refresh.
   currentPage: localStorage.getItem('aksara_page') || '',
+  // Asesmen yang sedang dibuka di halaman detail soal. Ikut disimpan supaya
+  // refresh tidak membuang konteks halaman “Soal” (daftarnya jadi kosong).
+  currentAsesmen: localStorage.getItem('aksara_asesmen') || '',
   cache: {}, cacheTime: {}, students: []
 };
 
@@ -26,6 +29,12 @@ export function simpanSesi() {
 export function simpanHalaman(page) {
   state.currentPage = page || '';
   try { localStorage.setItem('aksara_page', state.currentPage); } catch (e) {}
+}
+
+// Simpan asesmen yang sedang dikelola (id kosong = kembali ke daftar).
+export function simpanAsesmen(id) {
+  state.currentAsesmen = id || '';
+  try { localStorage.setItem('aksara_asesmen', state.currentAsesmen); } catch (e) {}
 }
 
 // Cache halaman dianggap masih segar selama CACHE_TTL ms. Selama segar, pindah
@@ -48,7 +57,9 @@ const INVALIDATION_MAP = {
   books: ['books'],
   settings: ['settings', 'reports'],
   reports: ['reports'],
-  progress: ['progress', 'dashboard']
+  progress: ['progress', 'dashboard'],
+  asesmen: ['asesmen'],
+  soal: ['soal', 'asesmen']
 };
 
 export function invalidateCache(entity) {
@@ -61,11 +72,12 @@ export function invalidateCache(entity) {
 // HANYA dipanggil kalau server benar-benar menolak sesi — bukan saat jaringan
 // bermasalah, supaya sekadar refresh tidak melempar pengguna keluar.
 export function hardLogout() {
-  state.token = ''; state.me = null; state.cache = {}; state.currentPage = '';
+  state.token = ''; state.me = null; state.cache = {}; state.currentPage = ''; state.currentAsesmen = '';
   try {
     localStorage.removeItem('aksara_token');
     localStorage.removeItem('aksara_user');
     localStorage.removeItem('aksara_page');
+    localStorage.removeItem('aksara_asesmen');
   } catch (e) {}
   // Hapus juga penanda "ada sesi" di <html> (dipasang skrip kecil di <head>),
   // supaya layar login benar-benar tampil kembali.
