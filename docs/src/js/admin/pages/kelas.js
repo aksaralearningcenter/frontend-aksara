@@ -23,7 +23,7 @@ import { app, modal, closeModal, studentOptions } from '../helpers.js';
   function openAddClass() {
     const guruList = (state.cache.users || []).filter(u => u.peran === 'Guru' && (u.status || '').toLowerCase() === 'aktif');
     const guruOptions = '<option value="">-- Pilih Guru --</option>' +
-      guruList.map(g => '<option value="' + esc(g.nama) + '">' + esc(g.nama) + '</option>').join('');
+      guruList.map(g => '<option value="' + esc(g.email) + '">' + esc(g.nama) + '</option>').join('');
     modal('➕ Tambah Kelas',
       '<div class="fg"><label>Nama Kelas *</label><input id="c-nama" placeholder="Kelas 5A"></div>' +
       '<div class="frow"><div class="fg"><label>Guru</label><select id="c-guru">' + guruOptions + '</select></div><div class="fg"><label>Jadwal</label><input id="c-jadwal" placeholder="Senin, Rabu"></div></div>' +
@@ -32,7 +32,7 @@ import { app, modal, closeModal, studentOptions } from '../helpers.js';
   }
 
   async function saveAddClass() {
-    const data = { nama: $('c-nama').value, guru: $('c-guru').value, jadwal: $('c-jadwal').value, kapasitas: parseInt($('c-kap').value) || 30, biaya: parseInt($('c-biaya').value) || 0, status: 'Aktif' };
+    const data = { nama: $('c-nama').value, guruEmail: $('c-guru').value, jadwal: $('c-jadwal').value, kapasitas: parseInt($('c-kap').value) || 30, biaya: parseInt($('c-biaya').value) || 0, status: 'Aktif' };
     if (!data.nama) { toast('Nama kelas wajib diisi.', 'err'); return; }
     try {
       const res = await api('addClass', data);
@@ -45,7 +45,7 @@ import { app, modal, closeModal, studentOptions } from '../helpers.js';
     if (!cls) { toast('Kelas tidak ditemukan.', 'err'); return; }
     const guruList = (state.cache.users || []).filter(u => u.peran === 'Guru' && (u.status || '').toLowerCase() === 'aktif');
     const guruOptions = '<option value="">-- Pilih Guru --</option>' +
-      guruList.map(g => '<option value="' + esc(g.nama) + '"' + (g.nama === cls.guru ? ' selected' : '') + '>' + esc(g.nama) + '</option>').join('');
+      guruList.map(g => '<option value="' + esc(g.email) + '"' + (g.email === cls.guru_email ? ' selected' : '') + '>' + esc(g.nama) + '</option>').join('');
     modal('✏️ Edit Kelas',
       '<div class="fg"><label>Nama Kelas *</label><input id="c-nama" value="' + esc(cls.nama) + '"></div>' +
       '<div class="frow"><div class="fg"><label>Guru</label><select id="c-guru">' + guruOptions + '</select></div><div class="fg"><label>Jadwal</label><input id="c-jadwal" value="' + esc(cls.jadwal || '') + '"></div></div>' +
@@ -54,7 +54,7 @@ import { app, modal, closeModal, studentOptions } from '../helpers.js';
   }
 
   async function saveEditClass(id) {
-    const data = { nama: $('c-nama').value, guru: $('c-guru').value, jadwal: $('c-jadwal').value, kapasitas: parseInt($('c-kap').value) || 30, biaya: parseInt($('c-biaya').value) || 0 };
+    const data = { nama: $('c-nama').value, guruEmail: $('c-guru').value, jadwal: $('c-jadwal').value, kapasitas: parseInt($('c-kap').value) || 30, biaya: parseInt($('c-biaya').value) || 0 };
     if (!data.nama) { toast('Nama kelas wajib diisi.', 'err'); return; }
     try {
       const res = await api('updateClass', id, data);
