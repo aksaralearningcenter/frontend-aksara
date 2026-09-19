@@ -1,7 +1,7 @@
 // ============ HALAMAN UJIAN SISWA ============
 // Satu halaman, tiga tahap: info (isi nama) → mengerjakan (timer mundur) →
 // hasil (skor otomatis). Siswa tidak perlu akun; pengajar cukup membagikan
-// tautan /ujian.html?id=<ID-ASESMEN>.
+// tautan /ujian/?id=<ID-ASESMEN> (alamat bersih tanpa .html).
 //
 // Hal penting:
 //   • Waktu resmi dihitung SERVER. Timer di sini hanya tampilan — kalau jam
@@ -39,12 +39,41 @@ function pesan(teks, jenis) {
   kotak._t = setTimeout(() => { kotak.hidden = true; }, jenis === 'err' ? 7000 : 4000);
 }
 
-async function panggil(path, opsi) {
+// Kegagalan fetch tidak memberi tahu apa pun di layar siswa, padahal penyebab
+// tersering adalah tautan yang menunjuk backend yang salah (mis. tautan yang
+// disalin saat pengajar menguji di server lokal, lalu dibuka dari HP). Pesannya
+// karena itu menyebut alamat backend yang sedang dipakai.
+function alamatLokal(u) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?(\/|$)/i.test(u);
+}
+
+function pesanKoneksi() {
+  if (alamatLokal(API_URL) && !alamatLokal(window.location.origin || '')) {
+    return 'Tautan ini menunjuk ke server lokal (' + API_URL + ') yang hanya jalan di komputer pengajar, jadi tidak bisa dibuka dari perangkat Anda. Minta pengajar mengirim ulang tautan dari panel admin di situs utama, atau minta pengajar mengaktifkan status asesmen di sana.';
+  }
+  return 'Tidak bisa menghubungi server (' + API_URL + '). Periksa koneksi internet Anda lalu muat ulang halaman.';
+}
+
+const tunggu = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function panggil(path, opsi, bolehUlang) {
+  // Hanya permintaan GET yang diulang otomatis: POST "mulai" dan "kirim" tidak
+  // idempoten, mengulanginya bisa membuat pengerjaan/penilaian ganda.
+  const ulangSah = bolehUlang === undefined ? !(opsi && opsi.method) : !!bolehUlang;
   let res;
-  try {
-    res = await fetch(API_URL + path, opsi);
-  } catch (e) {
-    throw new Error('Tidak bisa menghubungi server. Periksa koneksi internet Anda lalu muat ulang halaman.');
+  for (let percobaan = 0; ; percobaan++) {
+    try {
+      res = await fetch(API_URL + path, opsi);
+      break;
+    } catch (e) {
+      // Permintaan pertama setelah deploy/cold-start bisa gagal di lapisan
+      // jaringan/CDN (respons tanpa header CORS) — browser melaporkannya sama
+      // seperti server mati. Sekali coba ulang menyelamatkan kasus itu.
+      if (ulangSah && percobaan === 0) { await tunggu(1200); continue; }
+      const err = new Error(pesanKoneksi());
+      err.jaringan = true;
+      throw err;
+    }
   }
   const teks = await res.text();
   let data;
@@ -112,8 +141,19 @@ async function muatInfo() {
     inputNama.addEventListener('keydown', (e) => { if (e.key === 'Enter') mulai(); });
     inputNama.focus();
   } catch (ex) {
+    // Kegagalan jaringan ≠ asesmen bermasalah, jadi catatan "pastikan Aktif"
+    // hanya muncul saat masalahnya memang dari sisi server/status.
     el('isi').innerHTML = '<div class="kartu"><h2>😕 Asesmen tidak bisa dibuka</h2><p>' + esc(ex.message) + '</p>' +
-      '<p class="catatan">Bila ujian baru saja dibuka pengajar, minta dipastikan statusnya sudah <b>Aktif</b>.</p></div>';
+      (ex.jaringan ? '' : '<p class="catatan">Bila ujian baru saja dibuka pengajar, minta dipastikan statusnya sudah <b>Aktif</b>.</p>') +
+      '<button class="tombol utama" id="btn-ulang">🔄 Coba Lagi</button></div>';
+    const ulang = el('btn-ulang');
+    if (ulang) ulang.addEventListener('click', function () {
+      ulang.disabled = true;
+      ulang.textContent = '⏳ Memuat…';
+      muatInfo();
+      // Bila percobaan berikutnya juga gagal, tombol dibuka lagi oleh
+      // muatInfo (kartu digambar ulang), jadi tidak perlu direset di sini.
+    });
   }
 }
 

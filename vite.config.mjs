@@ -25,8 +25,8 @@ export default defineConfig({
       input: {
         landing: berkas('docs/index.html'),
         admin: berkas('docs/sites/index.html'),
-        // Halaman ujian siswa (dibuka lewat tautan /ujian.html?id=ASM-...).
-        ujian: berkas('docs/ujian.html')
+        // Halaman ujian siswa (dibuka lewat tautan bersih /ujian/?id=ASM-...).
+        ujian: berkas('docs/ujian/index.html')
       }
     }
   },

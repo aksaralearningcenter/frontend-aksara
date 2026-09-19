@@ -111,8 +111,8 @@ Halaman siswa tidak butuh akun — cukup bagikan tautan dari tombol
 **🔗 Salin Tautan Ujian**:
 
 ```
-https://<situs>/ujian.html?id=ASM-xxxxxxxx     # produksi
-http://localhost:5173/ujian.html?id=ASM-xxxx&api=http://localhost:3000/api
+https://<situs>/ujian/?id=ASM-xxxxxxxx     # produksi (alamat bersih, tanpa .html)
+http://localhost:5173/ujian/?id=ASM-xxxx&api=http://localhost:3000/api
 ```
 
 Siswa mengisi nama → mengerjakan dengan **hitung mundur** → skor otomatis

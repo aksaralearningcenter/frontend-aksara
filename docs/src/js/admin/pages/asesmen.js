@@ -79,7 +79,11 @@ export const render = {
         '<td>' + (t.mulai ? new Date(t.mulai).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-') + '</td>' +
         '<td><span class="badge ' + cls + '">' + (selesai ? skor : '—') + '</span></td>' +
         '<td>' + (t.benar || 0) + ' / ' + (t.salah || 0) + ' / ' + (t.kosong || 0) + '</td>' +
-        '<td>' + (Number(t.perlu_nilai || 0) > 0 ? '<span class="badge b-info">' + t.perlu_nilai + ' esai</span>' : '—') + '</td>' +
+        // Badge "N esai" = masih menunggu dinilai, jadi hanya untuk status
+        // Terkumpul. Tanpa syarat ini, pengerjaan yang sudah dinilai tetap
+        // terbaca seolah esainya belum diperiksa — padahal kolom Status sudah
+        // menulis "Dinilai" dan ringkasan "Perlu Dinilai" tak menghitungnya.
+        '<td>' + (t.status === 'Terkumpul' && Number(t.perlu_nilai || 0) > 0 ? '<span class="badge b-info">' + t.perlu_nilai + ' esai</span>' : '—') + '</td>' +
         '<td><span class="badge ' + (t.status === 'Dinilai' ? 'b-ok' : (t.status === 'Terkumpul' ? 'b-info' : 'b-warn')) + '">' + esc(t.status) + '</span></td>' +
         '<td style="white-space:nowrap;"><button class="btn btn-o btn-sm" data-action="detail-hasil" data-id="' + esc(t.id) + '">👁️ Detail</button></td>' +
       '</tr>';
@@ -347,11 +351,13 @@ async function saveSoal(id) {
 }
 
 // ============ TAUTAN UJIAN & HASIL ============
-// Tautan yang dibagikan pengajar ke siswa: halaman publik /ujian.html.
-// Panel admin ada di /sites/, jadi '../ujian.html' mengarah ke akar situs.
+// Tautan yang dibagikan pengajar ke siswa: halaman publik /ujian/ (tanpa .html).
+// Panel admin ada di /sites/, jadi '../ujian/' mengarah ke akar situs.
+// Tautan bersih tanpa ".html": ../ujian/ → /ujian/?id=ASM-xxxx (folder berisi
+// index.html, pola yang sama dengan ../sites/ untuk panel admin).
 function tautanUjian(id) {
   try {
-    const u = new URL('../ujian.html', window.location.href);
+    const u = new URL('../ujian/', window.location.href);
     u.searchParams.set('id', id);
     // Bila panel dibuka dengan ?api=... (mis. saat menguji di lokal), tautan
     // ujian mewarisi backend yang sama — kalau tidak, siswa akan menembak
@@ -359,7 +365,7 @@ function tautanUjian(id) {
     if (API_PARAM) u.searchParams.set('api', API_PARAM);
     return u.href;
   } catch (e) {
-    return '../ujian.html?id=' + encodeURIComponent(id) + (API_PARAM ? '&api=' + encodeURIComponent(API_PARAM) : '');
+    return '../ujian/?id=' + encodeURIComponent(id) + (API_PARAM ? '&api=' + encodeURIComponent(API_PARAM) : '');
   }
 }
 
