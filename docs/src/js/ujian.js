@@ -51,7 +51,7 @@ function pesanKoneksi() {
   if (alamatLokal(API_URL) && !alamatLokal(window.location.origin || '')) {
     return 'Tautan ini menunjuk ke server lokal (' + API_URL + ') yang hanya jalan di komputer pengajar, jadi tidak bisa dibuka dari perangkat Anda. Minta pengajar mengirim ulang tautan dari panel admin di situs utama, atau minta pengajar mengaktifkan status asesmen di sana.';
   }
-  return 'Tidak bisa menghubungi server (' + API_URL + '). Periksa koneksi internet Anda lalu muat ulang halaman.';
+  return 'Tidak bisa menghubungi server Aksara. Periksa koneksi internet Anda lalu muat ulang halaman.';
 }
 
 const tunggu = (ms) => new Promise(r => setTimeout(r, ms));
