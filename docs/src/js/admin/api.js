@@ -162,6 +162,7 @@ const API_MAP = {
   triggerRemoveMonthly:   { m: 'POST', p: 'site-settings', b: () => ({ nilai: { laporan_cron_aktif: 'Tidak' } }) },
   uploadImage:            { m: 'POST', p: 'upload/image', b: a => a[0] },
   uploadDoc:              { m: 'POST', p: 'upload/doc', b: a => a[0] },
+  uploadAudio:            { m: 'POST', p: 'upload/audio', b: a => a[0] },
   requestUploadTicket:    { m: 'POST', p: 'upload/ticket', b: a => a[0] },
   confirmUploadTicket:    { m: 'POST', p: 'upload/confirm', b: a => a[0] },
   getMaintenanceInfo:     { m: 'GET', p: 'maintenance' },

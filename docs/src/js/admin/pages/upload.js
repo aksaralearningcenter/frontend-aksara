@@ -36,6 +36,15 @@ import { api } from '../api.js';
       tolak: 'Hanya berkas PDF, Word, Excel, atau PowerPoint yang bisa diunggah.',
       batas: function () { return 'Ukuran berkas maksimal ' + MAX_UNGGAH_MB + ' MB.'; },
       tombol: '⬆️ Unggah Berkas', label: 'Dokumen', pratinjau: function (id, nama) { pratinjauDokumen(id, nama); }
+    },
+    audio: {
+      jenis: 'audio', fn: 'uploadAudio',
+      accept: 'audio/mpeg,audio/mp4,audio/wav,audio/ogg,.mp3,.m4a,.wav,.ogg,.webm',
+      uji: /^audio\//,
+      ekstensi: /\.(mp3|m4a|wav|ogg|webm)$/i,
+      tolak: 'Hanya berkas audio (MP3/M4A/WAV/OGG) yang bisa diunggah.',
+      batas: function () { return 'Ukuran berkas maksimal ' + MAX_UNGGAH_MB + ' MB.'; },
+      tombol: '⬆️ Unggah Audio', label: 'Audio', pratinjau: function (id, nama) { pratinjauAudio(id, nama); }
     }
   };
 
@@ -70,6 +79,22 @@ import { api } from '../api.js';
   }
 
   function pilihBerkas(id) { const f = $(id + '-file'); if (f) f.click(); }
+
+  /**
+   * Kolom berkas audio untuk soal listening: input URL + tombol unggah + player
+   * pratinjau. Memakai jalur unggah yang sama (tiket / base64) dengan jenis audio.
+   */
+  function audioField(label, id, value, placeholder, hint) {
+    return '<div class="fg" data-unggah="audio"><label>' + label + '</label>' +
+      '<div class="up-row">' +
+      '<input id="' + id + '" value="' + esc(value || '') + '" placeholder="' + (placeholder || 'https://... atau unggah berkas audio') + '" oninput="pratinjauAudio(\'' + id + '\')">' +
+      '<button class="btn btn-o btn-sm" type="button" onclick="pilihBerkas(\'' + id + '\')" title="Unggah berkas audio dari perangkat">' + JENIS_BERKAS.audio.tombol + '</button>' +
+      '</div>' +
+      '<input type="file" id="' + id + '-file" accept="' + JENIS_BERKAS.audio.accept + '" class="up-file" onchange="unggahBerkas(this, \'' + id + '\', null, \'audio\')">' +
+      '<div class="up-preview" id="' + id + '-prev"></div>' +
+      '<p class="up-hint">' + (hint ? hint + ' ' : '') +
+      'Berkas audio tersimpan ke Supabase Storage (bucket <b>konten</b>), maksimal ' + MAX_UNGGAH_MB + ' MB — bisa juga seret berkas ke area pratinjau.</p></div>';
+  }
 
   // Seret & lepas berkas gambar ke area pratinjau — memakai jalur unggah yang sama
   // (jadi validasi ukuran/jenis dan keadaan "sedang mengunggah" tetap berlaku).
@@ -181,6 +206,17 @@ import { api } from '../api.js';
       '<i class="fa-solid ' + ikon[0] + '" style="color:' + ikon[1] + '"></i> ' + esc(pakai || 'Buka berkas') + '</a>';
   }
 
+  // Pratinjau berkas audio: pemutar langsung di modal (audio soal listening).
+  function pratinjauAudio(id, nama) {
+    const prev = $(id + '-prev'), inp = $(id);
+    if (!prev || !inp) return;
+    const url = inp.value.trim();
+    if (!url) { prev.innerHTML = ''; return; }
+    prev.innerHTML = '<div class="up-audio"><audio controls preload="none" src="' + esc(url) + '"></audio>' +
+      (nama ? '<p class="up-hint">' + esc(nama) + '</p>' : '') +
+      '<p class="up-hint">🔊 Putar untuk memastikan audio terdengar benar.</p></div>';
+  }
+
   // Selama berkas diunggah, tombol Simpan dinonaktifkan supaya form tidak
   // tersimpan dengan URL gambar yang masih kosong (pengalaman di ponsel).
   function setUnggahSibuk(sibuk) {
@@ -287,5 +323,5 @@ import { api } from '../api.js';
     }
   }
 
-  export { uploadField, dokumenField, badgeBerkas, pilihBerkas, pratinjauGambar,
-    pratinjauDokumen, unggahBerkas };
+  export { uploadField, dokumenField, audioField, badgeBerkas, pilihBerkas, pratinjauGambar,
+    pratinjauDokumen, pratinjauAudio, unggahBerkas };

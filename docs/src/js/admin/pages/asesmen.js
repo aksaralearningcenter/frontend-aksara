@@ -9,9 +9,11 @@ import { $, esc, toast } from '../ui.js';
 import { api } from '../api.js';
 import { app, modal, closeModal } from '../helpers.js';
 import { API_PARAM } from '../config.js';
+import { audioField } from './upload.js';
 
 const JENIS = [
   { k: 'pg', label: 'Pilihan Ganda', badge: 'b-info' },
+  { k: 'listening', label: 'Listening', badge: 'b-info' },
   { k: 'isian', label: 'Isian Singkat', badge: 'b-warn' },
   { k: 'esai', label: 'Esai', badge: 'b-ok' }
 ];
@@ -35,7 +37,7 @@ export const render = {
       return '<tr>' +
         '<td><b>' + esc(a.judul) + '</b>' + (a.deskripsi ? '<div style="font-size:.75rem;">' + esc(a.deskripsi.substring(0, 90)) + '</div>' : '') + '</td>' +
         '<td>⏱️ ' + (a.durasi_menit || 0) + ' menit</td>' +
-        '<td><b>' + (a.soal || 0) + '</b> soal<div style="font-size:.75rem;">' + (a.pg || 0) + ' PG · ' + (a.isian || 0) + ' isian · ' + (a.esai || 0) + ' esai</div></td>' +
+        '<td><b>' + (a.soal || 0) + '</b> soal<div style="font-size:.75rem;">' + (a.pg || 0) + ' PG · ' + (a.listening || 0) + ' listening · ' + (a.isian || 0) + ' isian · ' + (a.esai || 0) + ' esai</div></td>' +
         '<td>' + (a.bobot || 0) + ' bobot<div style="font-size:.75rem;">KKM ' + (a.nilai_lulus || 0) + '</div></td>' +
         '<td><span class="badge ' + cls + '">' + esc(status) + '</span>' + (acak ? ' <span class="badge b-info" title="Soal/opsi diacak">🔀</span>' : '') + '</td>' +
         '<td style="white-space:nowrap;">' +
@@ -75,7 +77,10 @@ export const render = {
       const selesai = t.status !== 'Mengerjakan';
       const cls = !selesai ? 'b-warn' : (skor >= kkm ? 'b-ok' : 'b-err');
       return '<tr>' +
-        '<td data-no-i18n><b>' + esc(t.nama) + '</b>' + (t.lewat_waktu === 'Ya' ? ' <span class="badge b-warn" title="Dikumpulkan setelah batas waktu">⏰</span>' : '') + '</td>' +
+        '<td data-no-i18n><b>' + esc(t.nama) + '</b>' + (t.lewat_waktu === 'Ya' ? ' <span class="badge b-warn" title="Dikumpulkan setelah batas waktu">⏰</span>' : '') + ' ' +
+          (Number(t.pindah_tab) > 0 ? '<span class="badge b-warn" title="Siswa keluar tab/jendela saat mengerjakan">⚠️ ' + Number(t.pindah_tab) + '× pindah</span>' : '') + ' ' +
+          (t.student_id ? '<span class="badge b-ok" title="Dikerjakan lewat akun orang tua (data otomatis)">✔ akun</span>' : '') + ' ' +
+        '</td>' +
         '<td>' + (t.mulai ? new Date(t.mulai).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-') + '</td>' +
         '<td><span class="badge ' + cls + '">' + (selesai ? skor : '—') + '</span></td>' +
         '<td>' + (t.benar || 0) + ' / ' + (t.salah || 0) + ' / ' + (t.kosong || 0) + '</td>' +
@@ -122,8 +127,12 @@ export const render = {
       const opsi = pisah(s.opsi);
       const kunci = String(s.jawaban || '').toUpperCase();
       let rincian = '';
-      if (s.jenis === 'pg') {
-        rincian = '<ul class="soal-opsi">' + opsi.map(function(t, j) {
+      if (s.jenis === 'pg' || s.jenis === 'listening') {
+        // Listening menampilkan pemutar audio di atas pilihan jawabannya.
+        rincian = (s.jenis === 'listening' && s.audio_url
+          ? '<p class="soal-meta">🔊 <audio controls preload="none" src="' + esc(s.audio_url) + '" style="max-width:100%; vertical-align:middle;"></audio></p>'
+          : '') +
+          '<ul class="soal-opsi">' + opsi.map(function(t, j) {
           const benar = huruf(j) === kunci;
           return '<li class="' + (benar ? 'benar' : '') + '">' + huruf(j) + '. ' + esc(t) + (benar ? ' ✔' : '') + '</li>';
         }).join('') + '</ul>';
@@ -268,7 +277,7 @@ function openSoalList(id) {
 // dropdown Jenis Soal diganti tanpa menutup modal.
 function blokJenis(row) {
   const jenis = row.jenis || 'pg';
-  if (jenis === 'pg') {
+  if (jenis === 'pg' || jenis === 'listening') {
     const opsi = pisah(row.opsi);
     const kunci = String(row.jawaban || 'A').trim().toUpperCase();
     // Jumlah pilihan kunci minimal 4 (A–D), mengikuti jumlah opsi yang ada.
@@ -277,10 +286,14 @@ function blokJenis(row) {
     for (let i = 0; i < jumlah; i++) {
       pilih += '<option value="' + huruf(i) + '"' + (huruf(i) === kunci ? ' selected' : '') + '>' + huruf(i) + '</option>';
     }
-    return '<div class="fg"><label>Opsi Jawaban (satu per baris) *</label>' +
+    const blok = '<div class="fg"><label>Opsi Jawaban (satu per baris) *</label>' +
         '<textarea id="s-opsi" rows="4" placeholder="Contoh:&#10;12&#10;13&#10;14&#10;15">' + esc(opsi.join('\n')) + '</textarea>' +
         '<small style="font-size:.72rem; opacity:.8;">Baris pertama = opsi A, kedua = B, dan seterusnya (maksimal ' + MAKS_OPSI + ').</small></div>' +
       '<div class="fg"><label>Kunci Jawaban *</label><select id="s-kunci">' + pilih + '</select></div>';
+    if (jenis === 'pg') return blok;
+    // Listening (TOEFL): rekaman audio wajib di atas pilihan jawaban.
+    return audioField('Audio Soal (rekaman bacaan/pertanyaan) *', 's-audio', row.audio_url || '', 'Unggah MP3/M4A/WAV/OGG atau tempel URL') +
+      '<p style="font-size:.78rem; opacity:.85; margin-bottom:10px;">Siswa mendengarkan audio, lalu memilih jawaban A–D. Disarankan durasi 30–60 detik.</p>' + blok;
   }
   if (jenis === 'isian') {
     return '<div class="fg"><label>Jawaban yang Diterima (satu per baris) *</label>' +
@@ -296,7 +309,8 @@ function jenisSoalBerubah() {
   const opsi = $('s-opsi') ? $('s-opsi').value : '';
   const kunci = $('s-kunci') ? $('s-kunci').value : '';
   const isian = $('s-jawab-isian') ? $('s-jawab-isian').value : '';
-  $('s-isi-jenis').innerHTML = blokJenis({ jenis: jenis, opsi: opsi, jawaban: jenis === 'isian' ? isian : kunci });
+  const audioUrl = $('s-audio') ? $('s-audio').value : '';
+  $('s-isi-jenis').innerHTML = blokJenis({ jenis: jenis, opsi: opsi, jawaban: jenis === 'isian' ? isian : kunci, audio_url: audioUrl });
 }
 
 function openSoalModal(row) {
@@ -326,14 +340,16 @@ async function saveSoal(id) {
     bobot: parseInt($('s-bobot').value, 10) || 1,
     pembahasan: $('s-bahas').value.trim(),
     opsi: '',
-    jawaban: ''
+    jawaban: '',
+    audio_url: $('s-audio') ? $('s-audio').value.trim() : ''
   };
   if (!data.pertanyaan) { toast('Pertanyaan wajib diisi.', 'err'); return; }
-  if (jenis === 'pg') {
+  if (jenis === 'pg' || jenis === 'listening') {
     const opsi = dariBaris($('s-opsi').value);
     if (opsi.length < 2) { toast('Isi minimal 2 opsi jawaban (satu per baris).', 'err'); return; }
     data.opsi = opsi.join(' | ');
     data.jawaban = $('s-kunci').value;
+    if (jenis === 'listening' && !data.audio_url) { toast('Soal listening wajib memuat berkas audio.', 'err'); return; }
   } else if (jenis === 'isian') {
     const jawab = dariBaris($('s-jawab-isian').value);
     if (!jawab.length) { toast('Isi minimal satu jawaban benar.', 'err'); return; }
@@ -371,24 +387,45 @@ function tautanUjian(id) {
 
 function salinTautanUjian(id) {
   const tautan = tautanUjian(id);
-  const selesai = function () { toast('Tautan ujian disalin. Kirim ke siswa lewat WhatsApp/kelas.', 'ok'); };
+  // Salin diam-diam bila bisa, DAN selalu tampilkan dialog berisi QR + tautan
+  // (biar siswa yang kesulitan mengetik cukup memindai kodenya).
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(tautan).then(selesai).catch(function () { tampilkanTautan(tautan); });
-  } else {
-    tampilkanTautan(tautan);
+    navigator.clipboard.writeText(tautan).then(function () { toast('Tautan ujian disalin. Kirim ke siswa lewat WhatsApp/kelas.', 'ok'); }).catch(function () { /* dibiarkan tampil di dialog */ });
   }
+  tampilkanTautan(tautan);
 }
 
-// Cadangan bila clipboard diblokir (mis. situs tidak di HTTPS): tampilkan
-// tautannya agar bisa disalin manual.
+// Tampilkan tautan + KODE QR (dibuat on-device, tanpa layanan pihak ketiga).
+// Bila library QR tidak termuat (mis. cache lama), dialog tetap berguna.
 function tampilkanTautan(tautan) {
+  let kodeQR = '';
+  if (window.qrcode) {
+    try {
+      const qr = window.qrcode(0, 'M'); // 0 = ukuran otomatis; M = toleransi sedang
+      qr.addData(tautan);
+      qr.make();
+      kodeQR = qr.createImgTag(4, 10);
+    } catch (e) {
+      console.warn('QR gagal dibuat:', e);
+    }
+  }
   modal('🔗 Tautan Ujian Siswa',
-    '<p style="font-size:.8rem; margin-bottom:10px;">Bagikan tautan ini ke siswa. Hanya berfungsi bila status asesmen <b>Aktif</b>.</p>' +
-    '<div class="fg"><input id="lnk-ujian" value="' + esc(tautan) + '" readonly></div>' +
+    (kodeQR ? '<div style="text-align:center; margin-bottom:12px; background:#fff; padding:10px; border-radius:10px; display:inline-block; box-sizing:border-box;">' + kodeQR + '</div>' : '') +
+    '<p style="font-size:.8rem; margin-bottom:10px;">Bagikan ini ke siswa — bisa dipindai kode QR-nya atau disalin tautannya. Hanya berfungsi bila status asesmen <b>Aktif</b>.</p>' +
+    '<div class="fg" style="margin-bottom:6px;"><input id="lnk-ujian" value="' + esc(tautan) + '" readonly></div>' +
     '<p style="font-size:.75rem;">Aktifkan status asesmen lebih dulu supaya siswa bisa membukanya.</p>',
+    '<button class="btn btn-o btn-sm" id="lnk-salin">📋 Salin</button>' +
     '<button class="btn btn-n btn-sm" onclick="closeModal()">Tutup</button>');
   const inp = $('lnk-ujian');
   if (inp) { inp.focus(); inp.select(); }
+  const salinBtn = $('lnk-salin');
+  if (salinBtn) salinBtn.addEventListener('click', function () {
+    const salin = function () { toast('Tautan ujian disalin.', 'ok'); };
+    const jatuh = function () { if (inp) { inp.select(); try { document.execCommand('copy'); } catch (e) {} } salin(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(tautan).then(salin).catch(jatuh);
+    } else { jatuh(); }
+  });
 }
 
 function bukaHasil(id) {
@@ -408,7 +445,8 @@ async function bukaDetailHasil(attemptId) {
       return '<tr>' +
         '<td>' + (i + 1) + '</td>' +
         '<td><span class="badge ' + jenisInfo(x.jenis).badge + '">' + esc(jenisInfo(x.jenis).label) + '</span></td>' +
-        '<td data-no-i18n>' + esc((x.pertanyaan || '').substring(0, 90)) + '</td>' +
+        '<td data-no-i18n>' + esc((x.pertanyaan || '').substring(0, 90)) +
+          (x.jenis === 'listening' && x.audio_url ? '<br><audio controls preload="none" src="' + esc(x.audio_url) + '" style="max-width:200px; margin-top:6px;"></audio>' : '') + '</td>' +
         '<td data-no-i18n>' + esc(x.jawaban || '(kosong)') + '</td>' +
         '<td data-no-i18n>' + esc(kunci) + '</td>' +
         '<td><span class="badge ' + cls + '">' + esc(x.benar) + '</span></td>' +
@@ -426,7 +464,9 @@ async function bukaDetailHasil(attemptId) {
 
     modal('👁️ Jawaban: ' + (t.nama || ''),
       '<p style="font-size:.78rem; margin-bottom:12px;"><b>' + esc(t.nama || '') + '</b> · mulai ' + (t.mulai ? new Date(t.mulai).toLocaleString('id-ID') : '-') +
-        ' · skor saat ini <b>' + (t.skor || 0) + '</b>' + (t.lewat_waktu === 'Ya' ? ' · ⏰ lewat batas waktu' : '') + '</p>' +
+        ' · skor saat ini <b>' + (t.skor || 0) + '</b>' + (t.lewat_waktu === 'Ya' ? ' · ⏰ lewat batas waktu' : '') +
+        (Number(t.pindah_tab) > 0 ? ' · ⚠️ ' + Number(t.pindah_tab) + '× pindah tab' : '') +
+        (t.student_id ? ' · ✔ dari akun orang tua' : '') + '</p>' +
       '<div class="table-wrap" style="max-height:340px; overflow-y:auto;"><table><thead><tr><th>No</th><th>Jenis</th><th>Pertanyaan</th><th>Jawaban Siswa</th><th>Kunci</th><th>Hasil</th></tr></thead><tbody>' +
       (rincian || '<tr><td colspan="6" style="text-align:center;">Tidak ada jawaban tercatat.</td></tr>') + '</tbody></table></div>' +
       bagianNilai,

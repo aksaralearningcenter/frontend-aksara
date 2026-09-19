@@ -17,10 +17,20 @@ import { app } from '../helpers.js';
             '<tr><td>' + new Date(a.tanggal).toLocaleDateString('id-ID') + '</td><td><span class="badge ' + (a.status === 'Hadir' ? 'b-ok' : (a.status === 'Alpha' ? 'b-err' : 'b-warn')) + '">' + a.status + '</span></td></tr>').join('');
           const pr = (c.progres || []).slice(0, 5).map(p =>
             '<tr><td>' + new Date(p.tanggal).toLocaleDateString('id-ID') + '</td><td>' + esc(p.mapel) + '</td><td>' + esc(p.topik) + '</td><td style="text-align:right;"><b>' + (p.nilai === '' || p.nilai == null ? '-' : p.nilai) + '</b></td></tr>').join('');
+          const uj = (c.ujian || []).map(u => {
+            const lulus = u.nilai_lulus != null ? (Number(u.skor) >= Number(u.nilai_lulus)) : null;
+            const cls = lulus === null ? 'b-info' : (lulus ? 'b-ok' : 'b-warn');
+            const label = u.status === 'Selesai' ? (lulus === null ? 'Selesai' : (lulus ? '✔ Lulus' : '✔ Tuntas')) : (u.status === 'Mengerjakan' ? '⏳ Dikerjakan' : u.status || '-');
+            const ekstra = Number(u.pindah_tab) > 0 ? ' <span class="badge b-warn" title="Meninggalkan halaman ujian ' + Number(u.pindah_tab) + '×">⚠️' + Number(u.pindah_tab) + '×</span>' : '';
+            return '<tr><td>' + esc(u.judul) + '</td><td>' + (u.mulai ? new Date(u.mulai).toLocaleDateString('id-ID') : '-') + '</td><td style="text-align:right;"><b>' + (u.skor || 0) + '</b></td><td><span class="badge ' + cls + '">' + label + '</span>' + ekstra + '</td></tr>';
+          }).join('');
           return '<div class="card"><div class="card-head"><h3>👨‍🎓 ' + esc(c.nama) + ' — ' + esc(c.kelas) + '</h3><span class="badge b-ok">' + rp(c.saldo) + '</span></div>' +
             '<div class="grid"><div><h4 style="margin-bottom:8px;">💰 Tabungan</h4><table><tbody>' + (tx || '<tr><td>Belum ada transaksi.</td></tr>') + '</tbody></table></div>' +
             '<div><h4 style="margin-bottom:8px;">📝 Kehadiran ' + (abs.length ? '· ' + persen + '%' : '') + '</h4><table><tbody>' + (ab || '<tr><td>Belum ada catatan.</td></tr>') + '</tbody></table></div>' +
-            '<div><h4 style="margin-bottom:8px;">📈 Progres</h4><table><tbody>' + (pr || '<tr><td>Belum ada catatan.</td></tr>') + '</tbody></table></div></div></div>';
+            '<div><h4 style="margin-bottom:8px;">📈 Progres</h4><table><tbody>' + (pr || '<tr><td>Belum ada catatan.</td></tr>') + '</tbody></table></div></div>' +
+            '<div class="ujian-riwayat"><h4 style="margin-bottom:8px;">📚 Ujian</h4>' +
+            (uj ? '<table><thead><tr><th>Ujian</th><th>Tanggal</th><th style="text-align:right;">Skor</th><th>Status</th></tr></thead><tbody>' + uj + '</tbody></table>' : '<p style="font-size:.8rem; color:var(--redup); margin:0;">Belum ada riwayat ujian.</p>') +
+            '</div></div>';
         }).join('');
         const notifOn = (data.notifEmail || 'Aktif') === 'Aktif';
         $('page').innerHTML = '<div class="card"><div class="card-head"><h2>👋 Selamat datang, ' + esc(data.namaOrangTua || state.me.nama || 'Orang Tua') + '</h2></div><p style="font-size:0.9rem;">Pemantauan data anak Anda: tabungan, kehadiran, dan progres belajar.</p></div>' +

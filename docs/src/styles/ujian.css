@@ -136,6 +136,37 @@ b { color: var(--judul); }
 .peringatan { font-size: .8rem; color: var(--warn); margin-top: 10px; }
 .hasil .info-baris { text-align: left; }
 
+/* ---------- Listening ---------- */
+.soal-audio { margin: 12px 0 14px; }
+.soal-audio audio { width: 100%; border-radius: 10px; }
+.hint-audio { font-size: .78rem; color: var(--redup); margin-top: 6px; }
+
+/* ---------- Pemilihan akun orang tua ---------- */
+.akun-pilih {
+  border: 1px dashed var(--garis); border-radius: 12px;
+  padding: 12px 14px 10px; margin: 14px 0 4px; background: rgba(16,43,78,.03);
+}
+.akun-pilih select.isian { width: 100%; }
+.akun-pilih .catatan { margin: 8px 0 0; font-size: .74rem; }
+
+/* ---------- Kunci proktor ---------- */
+.kunci {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(10, 22, 36, .96); backdrop-filter: blur(4px);
+  opacity: 0; visibility: hidden; transition: opacity .18s ease, visibility .18s ease;
+}
+.kunci.show { opacity: 1; visibility: visible; }
+.kunci-kotak {
+  text-align: center; max-width: 420px; color: #fff;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.18);
+  border-radius: 16px; padding: 28px 24px;
+}
+.kunci-ikon { font-size: 2.6rem; margin: 0 0 8px; }
+.kunci-kotak h2 { color: #fff; margin: 0 0 10px; font-size: 1.15rem; }
+.kunci-info { font-size: .9rem; line-height: 1.5; opacity: .92; margin: 0 0 8px; }
+.kunci-warn { font-size: .78rem; color: #F5C6A3; margin: 0; }
+
 /* ---------- Pesan & kaki ---------- */
 .pesan {
   position: fixed; left: 50%; transform: translateX(-50%); top: 14px; z-index: 80;
