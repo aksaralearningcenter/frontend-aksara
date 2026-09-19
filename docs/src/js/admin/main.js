@@ -71,7 +71,11 @@ function handleAction(action, id, name, extra) {
   });
 
   function applyGate(peran) {
-    const adminOnly = ['users', 'registrations', 'pricing', 'news', 'books', 'gallery', 'partners', 'testimoni', 'faq', 'program', 'kurikulum', 'kartu', 'situs', 'chatbot', 'maintenance'];
+    // Halaman yang datanya memang Admin saja. 'reports', 'loginhistory', dan
+    // 'settings' ikut di sini karena isinya memakai pengaturan situs, riwayat
+    // login, dan token WhatsApp — sebelumnya menunya tampil untuk Guru tetapi
+    // halamannya selalu gagal dengan "Hanya Admin yang bisa melakukan aksi ini".
+    const adminOnly = ['users', 'registrations', 'pricing', 'news', 'books', 'gallery', 'partners', 'testimoni', 'faq', 'program', 'kurikulum', 'kartu', 'situs', 'chatbot', 'maintenance', 'reports', 'loginhistory', 'settings'];
     const parentOnly = peran === 'Orang Tua';
     document.querySelectorAll('#nav button').forEach(b => {
       const p = b.dataset.page;
