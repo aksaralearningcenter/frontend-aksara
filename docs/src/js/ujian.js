@@ -121,7 +121,7 @@ async function muatInfo() {
     return;
   }
   try {
-    const info = await panggil('/asesmen/' + encodeURIComponent(asesmenId));
+    const info = await panggil('/public/asesmen/' + encodeURIComponent(asesmenId));
     document.title = info.judul + ' — Ujian';
     el('isi').innerHTML =
       '<div class="kartu">' +
@@ -164,7 +164,7 @@ async function mulai() {
   tombol.disabled = true;
   tombol.textContent = '⏳ Menyiapkan soal…';
   try {
-    const data = await post('/asesmen/' + encodeURIComponent(asesmenId) + '/mulai', { nama: nama });
+    const data = await post('/public/asesmen/' + encodeURIComponent(asesmenId) + '/mulai', { nama: nama });
     attempt = data;
     jawaban = {};
     tampilkanUjian();
@@ -271,7 +271,7 @@ async function kumpulkan(otomatis) {
   clearInterval(timer);
   const daftar = attempt.soal.map(s => ({ question_id: s.id, jawaban: String(jawaban[s.id] || '') }));
   try {
-    const hasil = await post('/asesmen/attempts/' + encodeURIComponent(attempt.attempt_id) + '/kirim', { jawaban: daftar });
+    const hasil = await post('/public/asesmen/attempts/' + encodeURIComponent(attempt.attempt_id) + '/kirim', { jawaban: daftar });
     hapusSimpanan();
     tampilkanHasil(hasil, otomatis);
   } catch (ex) {
